@@ -1,33 +1,25 @@
-# Wake Up Alarm Extension
+# Coding Screensaver for VS Code
 
-A simple VS Code extension to alert you when you might be falling asleep at the keyboard.
-
-![Wake Up Alarm Demo](media/demo.gif)
+An immersive, animated screensaver for Visual Studio Code that simulates live coding by fetching and typing out real code snippets from GitHub.
 
 ## Features
 
-- Monitors key presses to detect long strings of the same character being repeated.
-- If the same key is pressed 20 times in a row, a warning message appears and an alarm sound plays.
-- The alarm sound stops as soon as you resume normal typing (i.e., press a different key).
+- **Dual Activation Modes**: Activates automatically after a configurable period of inactivity or after repeated key presses.
+- **Live Code from GitHub**: Fetches and displays real, public code Gists from the GitHub community.
+- **Language-Aware**: Intelligently tries to find Gists that match the programming language of the file you're currently working on.
+- **Live Syntax Highlighting**: Code is "typed" out with full syntax highlighting, character by character, for a realistic effect.
+- **Infinite Loop**: Never stops! Once one snippet is finished, it automatically fetches and displays another.
+- **Robust Fallback System**: If GitHub is unavailable (e.g., due to rate limits or network issues), it seamlessly switches to displaying a loop of classic algorithms like Quicksort.
+- **Highly Configurable**: Easily change the idle time and key press trigger count via VS Code settings.
 
-## How to Use
+## Configuration
 
-1.  Install the extension.
-2.  Make sure you have a sound file named `alarm.mp3` or `alarm.wav` inside a `media` folder in your extension's installation directory.
-3.  The extension will automatically monitor your typing.
+You can customize the extension's behavior by modifying the following settings in your `settings.json`:
 
-## Important Notes
+- `screenSaver.idleTimeSeconds`: The number of seconds of inactivity before the screensaver starts. (Default: `60`)
+- `screenSaver.triggerCount`: The number of repeated key presses to trigger the screensaver. (Default: `20`)
+- `screenSaver.excludedKeys`: A list of keys to ignore for the repeat-press trigger. (Default: `["<delete>"]`)
 
-- If your computer is on mute or the volume is too low, you may not hear the alarm sound.
+## Development Journey
 
-## Known Issues
-
-### IME Language Support (Korean, Japanese, Chinese, etc.)
-
-Due to the way Input Method Editors (IMEs) compose characters, the extension may count repeated characters faster than intended. For example, typing 10 identical Korean characters may be counted as 20 repeats by the extension, triggering the alarm prematurely.
-
-This is a known limitation, and we are looking into more robust ways to handle character input from various language sources.
-
-## Contributing
-
-This project was created by [setian](https://github.com/setian).
+The entire development process for this extension, from initial idea to final polish, was done in collaboration with the Gemini AI assistant. You can view the complete conversation and development history in [DEVELOPMENT_LOG.md](./DEVELOPMENT_LOG.md).

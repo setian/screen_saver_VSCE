@@ -31,7 +31,7 @@
       "properties": {
         "screenSaver.idleTimeSeconds": {
           "type": "number",
-          "default": 60,
+          "default": 300,
           "description": "Number of seconds of inactivity before the screen saver starts."
         },
         "screenSaver.triggerCount": {

@@ -89,16 +89,37 @@ async function fetchRandomGistSnippet(languageId: string): Promise<{code: string
             for (const response of responses) {
                 if (response.ok) {
                     freshGists = freshGists.concat(await response.json());
-                } else {
-                    console.warn(`Failed to fetch a page of gists: ${response.status}`);
                 }
             }
 
-            if (freshGists.length > 0) {
-                gistCache = freshGists;
+            // --- ADVANCED SPAM FILTER ---
+            const spamKeywords = ['casino', 'online', 'betting', 'poker', 'slot', 'gambling'];
+            // Regex to allow only printable ASCII and Korean characters in the description.
+            const allowedCharsRegex = /^[ -~ㄱ-ㅎㅏ-ㅣ가-힣]*$/;
+
+            const cleanGists = freshGists.filter(gist => {
+                const description = gist.description || '';
+                const lowerDesc = description.toLowerCase();
+
+                // Rule 1: Check for English spam keywords
+                if (spamKeywords.some(keyword => lowerDesc.includes(keyword))) {
+                    return false;
+                }
+
+                // Rule 2: Check for non-ASCII/Korean characters
+                if (!allowedCharsRegex.test(description)) {
+                    return false;
+                }
+
+                return true; // It's a clean gist
+            });
+
+            if (cleanGists.length > 0) {
+                gistCache = cleanGists;
                 cacheTimestamp = now;
+                console.log(`Fetched and cached ${cleanGists.length} non-spam gists.`);
             } else {
-                console.warn("Failed to fetch any gists. Using fallback snippet.");
+                console.warn("Failed to fetch any non-spam gists. Using fallback snippet.");
                 return FALLBACK_SNIPPETS[Math.floor(Math.random() * FALLBACK_SNIPPETS.length)];
             }
         } catch (error: any) {
@@ -136,7 +157,6 @@ async function fetchRandomGistSnippet(languageId: string): Promise<{code: string
     try {
         const contentResponse = await fetch(fileToFetch.raw_url);
         if (!contentResponse.ok) {
-            console.warn(`Failed to fetch file content (Status: ${contentResponse.status}). Using fallback snippet.`);
             return FALLBACK_SNIPPETS[Math.floor(Math.random() * FALLBACK_SNIPPETS.length)];
         }
         const content = await contentResponse.text();
@@ -146,7 +166,6 @@ async function fetchRandomGistSnippet(languageId: string): Promise<{code: string
         return { code: fallbackMessage + finalCode, languageId: actualLanguage };
 
     } catch (error: any) {
-        console.error("Error fetching file content, using fallback snippet:", error);
         return FALLBACK_SNIPPETS[Math.floor(Math.random() * FALLBACK_SNIPPETS.length)];
     }
 }
@@ -191,7 +210,6 @@ async function showScreenSaver(context: vscode.ExtensionContext) {
     const initialLangId = vscode.window.activeTextEditor?.document.languageId || 'plaintext';
     const initialContent = await fetchRandomGistSnippet(initialLangId);
 
-    // Add a final check to ensure the panel wasn't closed during the async fetch
     if (webviewPanel) {
         webviewPanel.webview.postMessage({ command: 'loadCode', ...initialContent });
     }
@@ -213,52 +231,14 @@ export function activate(context: vscode.ExtensionContext) {
         if (!vscode.window.state.focused) return;
 
         const configuration = vscode.workspace.getConfiguration('screenSaver');
-        const idleTime = configuration.get<number>('idleTimeSeconds', 60);
+        const idleTime = configuration.get<number>('idleTimeSeconds', 300);
         if (idleTime > 0) {
             idleTimer = setTimeout(() => showScreenSaver(context), idleTime * 1000);
         }
     };
 
-    let lastAction: string = '';
-    let repeatCount: number = 0;
-
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
-        resetIdleTimer();
-        if (!vscode.window.state.focused || event.contentChanges.length === 0) return;
-
-        const configuration = vscode.workspace.getConfiguration('screenSaver');
-        const triggerCount = configuration.get<number>('triggerCount', 20);
-        if (triggerCount <= 0) return;
-
-        const excludedKeys = configuration.get<string[]>('excludedKeys', ['<delete>']);
-        const change = event.contentChanges[event.contentChanges.length - 1];
-        let currentAction: string | null = null;
-
-        if (change.text.length === 1 && !change.text.includes('\n')) {
-            currentAction = change.text;
-        } else if (change.text === '' && change.rangeLength > 0) {
-            currentAction = '<delete>';
-        }
-
-        if (!currentAction || excludedKeys.includes(currentAction)) {
-            repeatCount = 0;
-            lastAction = '';
-            return;
-        }
-
-        if (currentAction === lastAction) {
-            repeatCount++;
-        } else {
-            lastAction = currentAction;
-            repeatCount = 1;
-        }
-
-        if (repeatCount >= triggerCount) {
-            repeatCount = 0;
-            showScreenSaver(context);
-        }
-    }));
-
+    // Reset timer on any text change, selection change, or editor change.
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => resetIdleTimer()));
 

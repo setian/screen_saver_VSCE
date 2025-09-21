@@ -29,7 +29,7 @@
             bottom: 10px;
             overflow-y: auto;
         }
-        /* Scrollbar styling for a more integrated look */
+        /* Scrollbar styling */
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -62,42 +62,54 @@
             if (animationTimeout) clearTimeout(animationTimeout);
 
             const codeBlock = document.getElementById('code-block');
+            // For highlight.js themes to apply, the root code block often needs the 'hljs' class.
+            codeBlock.className = 'hljs';
             codeBlock.innerHTML = '';
 
+            // 1. Get the highlighted HTML string
             const highlightedHtml = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+            
+            // 2. Create a temporary element to parse the HTML and extract characters with their styles
             const tempContainer = document.createElement('div');
             tempContainer.innerHTML = highlightedHtml;
 
             const charsToAnimate = [];
-            const treeWalker = document.createTreeWalker(tempContainer, NodeFilter.SHOW_TEXT, null, false);
-            
-            let textNode;
-            while (textNode = treeWalker.nextNode()) {
-                const parentNode = textNode.parentNode;
-                const text = textNode.textContent;
-                for (const char of text) {
-                    const charSpan = document.createElement('span');
-                    if (parentNode && parentNode.nodeName === 'SPAN') {
-                        charSpan.className = parentNode.className;
+            // 3. Walk the DOM tree and create a flat list of single-character spans, preserving their classes
+            function traverse(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    for (const char of node.textContent) {
+                        const charSpan = document.createElement('span');
+                        // Inherit class from parent span if it exists
+                        if (node.parentNode && node.parentNode.nodeName === 'SPAN') {
+                            charSpan.className = node.parentNode.className;
+                        }
+                        charSpan.style.display = 'none';
+                        charSpan.textContent = char;
+                        charsToAnimate.push(charSpan);
                     }
-                    charSpan.style.display = 'none'; // Use display:none to not take up space
-                    charSpan.textContent = char;
-                    charsToAnimate.push(charSpan);
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    for (const child of node.childNodes) {
+                        traverse(child);
+                    }
                 }
             }
+            traverse(tempContainer);
 
+            // 4. Append all hidden characters to the DOM
             charsToAnimate.forEach(charNode => codeBlock.appendChild(charNode));
 
+            // 5. Reveal characters one by one
             let revealIndex = 0;
-            const typingSpeed = 70;
+            const typingSpeed = 80; // Slower, more natural speed
 
             function reveal() {
                 if (revealIndex < charsToAnimate.length) {
-                    charsToAnimate[revealIndex].style.display = 'inline'; // Reveal by changing display
+                    charsToAnimate[revealIndex].style.display = 'inline';
                     container.scrollTop = container.scrollHeight;
                     revealIndex++;
-                    animationTimeout = setTimeout(reveal, typingSpeed);
+                    animationTimeout = setTimeout(reveal, Math.random() * typingSpeed + 40);
                 } else {
+                    // Finished, request next Gist
                     animationTimeout = setTimeout(() => {
                         const status = document.createElement('em');
                         status.textContent = "\n\n--- Finished. Fetching new Gist... ---";

@@ -1,0 +1,67 @@
+{
+  "name": "coding-screensaver",
+  "displayName": "Coding Screen Saver",
+  "description": "An immersive screen saver that activates on idle or repeated key presses.",
+  "version": "0.2.0",
+  "publisher": "Nahceskrap",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/setian/WakeUpAlarm_VSCE.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "screenSaver.test",
+        "title": "Screen Saver: Test"
+      }
+    ],
+    "configuration": {
+      "title": "Coding Screen Saver",
+      "properties": {
+        "screenSaver.idleTimeSeconds": {
+          "type": "number",
+          "default": 60,
+          "description": "Number of seconds of inactivity before the screen saver starts."
+        },
+        "screenSaver.triggerCount": {
+          "type": "number",
+          "default": 20,
+          "description": "Number of repeated key presses to trigger the screen saver."
+        },
+        "screenSaver.excludedKeys": {
+          "type": "array",
+          "default": [
+            "<delete>"
+          ],
+          "description": "A list of actions to ignore for the repeated key press trigger. Use '<delete>' for Backspace/Delete.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "compile": "npm run esbuild-base -- --sourcemap",
+    "watch": "npm run esbuild-base -- --sourcemap --watch",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.19.11",
+    "typescript": "^5.3.3"
+  }
+}

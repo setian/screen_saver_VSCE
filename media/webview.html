@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'unsafe-inline' https://cdnjs.cloudflare.com;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Saver</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <style>
+        body, html {
+            background-color: #1E1E1E; /* VS Code Default Dark+ background */
+            color: #D4D4D4; /* Default text color */
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: none;
+        }
+        #container {
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.4;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            overflow-y: auto;
+        }
+        /* Scrollbar styling for a more integrated look */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2D2D2D;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body onclick="exit()">
+    <pre id="container"><code id="code-block"></code></pre>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        const vscode = acquireVsCodeApi();
+        const container = document.getElementById('container');
+        let animationTimeout;
+
+        function exit() {
+            if (animationTimeout) clearTimeout(animationTimeout);
+            vscode.postMessage({ command: 'exitScreenSaver' });
+        }
+
+        function startAnimation(code, lang) {
+            if (animationTimeout) clearTimeout(animationTimeout);
+
+            const codeBlock = document.getElementById('code-block');
+            codeBlock.innerHTML = '';
+
+            const highlightedHtml = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = highlightedHtml;
+
+            const charsToAnimate = [];
+            const treeWalker = document.createTreeWalker(tempContainer, NodeFilter.SHOW_TEXT, null, false);
+            
+            let textNode;
+            while (textNode = treeWalker.nextNode()) {
+                const parentNode = textNode.parentNode;
+                const text = textNode.textContent;
+                for (const char of text) {
+                    const charSpan = document.createElement('span');
+                    if (parentNode && parentNode.nodeName === 'SPAN') {
+                        charSpan.className = parentNode.className;
+                    }
+                    charSpan.style.display = 'none'; // Use display:none to not take up space
+                    charSpan.textContent = char;
+                    charsToAnimate.push(charSpan);
+                }
+            }
+
+            charsToAnimate.forEach(charNode => codeBlock.appendChild(charNode));
+
+            let revealIndex = 0;
+            const typingSpeed = 70;
+
+            function reveal() {
+                if (revealIndex < charsToAnimate.length) {
+                    charsToAnimate[revealIndex].style.display = 'inline'; // Reveal by changing display
+                    container.scrollTop = container.scrollHeight;
+                    revealIndex++;
+                    animationTimeout = setTimeout(reveal, typingSpeed);
+                } else {
+                    animationTimeout = setTimeout(() => {
+                        const status = document.createElement('em');
+                        status.textContent = "\n\n--- Finished. Fetching new Gist... ---";
+                        codeBlock.appendChild(status);
+                        container.scrollTop = container.scrollHeight;
+                        vscode.postMessage({ command: 'requestNewGist' });
+                    }, 3000);
+                }
+            }
+            reveal();
+        }
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.command === 'loadCode') {
+                startAnimation(message.code, message.languageId);
+            }
+        });
+
+        window.addEventListener('keydown', exit);
+
+    </script>
+</body>
+</html>

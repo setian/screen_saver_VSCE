@@ -24,6 +24,7 @@ The screensaver will activate automatically when there has been no activity (typ
 You can customize the extension's behavior by modifying the following settings in your `settings.json`:
 
 - `screenSaver.idleTimeSeconds`: The number of seconds of inactivity before the screen saver starts. (Default: `300`)
+- `screenSaver.typingSpeed`: Typing speed in milliseconds per character while rendering the code. (Default: `40`)
 
 ## Development Journey
 

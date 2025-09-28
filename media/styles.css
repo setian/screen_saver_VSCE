@@ -1,0 +1,80 @@
+body, html {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: none;
+}
+
+#container {
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.4;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    overflow-y: auto;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2D2D2D;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+.token-keyword {
+    color: #C586C0;
+}
+
+.token-string {
+    color: #CE9178;
+}
+
+.token-comment {
+    color: #6A9955;
+    font-style: italic;
+}
+
+.token-number {
+    color: #B5CEA8;
+}
+
+.token-function {
+    color: #DCDCAA;
+}
+
+.token-builtin {
+    color: #4FC1FF;
+}
+
+.token-type {
+    color: #4EC9B0;
+}
+
+.token-literal {
+    color: #569CD6;
+}
+
+.status-message {
+    display: block;
+    margin-top: 16px;
+    font-style: italic;
+    color: #808080;
+}

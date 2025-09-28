@@ -4,7 +4,7 @@
   "description": "An immersive, animated screensaver for VS Code that simulates live coding by fetching real code snippets from GitHub.",
   "version": "1.0.0",
   "publisher": "Nahceskrap",
-  "icon": "media/icon.png",
+  "icon": "media/icons/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/setian/screen_saver_VSCE.git"
@@ -33,6 +33,13 @@
                     "type": "number",
                     "default": 300,
                     "description": "The number of seconds of inactivity before the screen saver starts."
+                },
+                "screenSaver.typingSpeed": {
+                    "type": "number",
+                    "default": 40,
+                    "minimum": 1,
+                    "maximum": 200,
+                    "description": "Typing speed in milliseconds per character while rendering code."
                 }
       }
     }

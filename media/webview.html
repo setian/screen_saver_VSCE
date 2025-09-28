@@ -2,135 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'unsafe-inline' https://cdnjs.cloudflare.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}};">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Saver</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
-    <style>
-        body, html {
-            background-color: #1E1E1E; /* VS Code Default Dark+ background */
-            color: #D4D4D4; /* Default text color */
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            cursor: none;
-        }
-        #container {
-            white-space: pre-wrap;
-            font-size: 14px;
-            line-height: 1.4;
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            overflow-y: auto;
-        }
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #2D2D2D;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #555;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #666;
-        }
-    </style>
+    <link rel="stylesheet" href="{{styleUri}}">
 </head>
-<body onclick="exit()">
+<body>
     <pre id="container"><code id="code-block"></code></pre>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script>
-        const vscode = acquireVsCodeApi();
-        const container = document.getElementById('container');
-        let animationTimeout;
-
-        function exit() {
-            if (animationTimeout) clearTimeout(animationTimeout);
-            vscode.postMessage({ command: 'exitScreenSaver' });
-        }
-
-        function startAnimation(code, lang, speed) {
-            if (animationTimeout) clearTimeout(animationTimeout);
-
-            const codeBlock = document.getElementById('code-block');
-            // For highlight.js themes to apply, the root code block often needs the 'hljs' class.
-            codeBlock.className = 'hljs';
-            codeBlock.innerHTML = '';
-
-            // 1. Get the highlighted HTML string
-            const highlightedHtml = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
-            
-            // 2. Create a temporary element to parse the HTML and extract characters with their styles
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = highlightedHtml;
-
-            const charsToAnimate = [];
-            // 3. Walk the DOM tree and create a flat list of single-character spans, preserving their classes
-            function traverse(node) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    for (const char of node.textContent) {
-                        const charSpan = document.createElement('span');
-                        // Inherit class from parent span if it exists
-                        if (node.parentNode && node.parentNode.nodeName === 'SPAN') {
-                            charSpan.className = node.parentNode.className;
-                        }
-                        charSpan.style.display = 'none';
-                        charSpan.textContent = char;
-                        charsToAnimate.push(charSpan);
-                    }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    for (const child of node.childNodes) {
-                        traverse(child);
-                    }
-                }
-            }
-            traverse(tempContainer);
-
-            // 4. Append all hidden characters to the DOM
-            charsToAnimate.forEach(charNode => codeBlock.appendChild(charNode));
-
-            // 5. Reveal characters one by one
-            let revealIndex = 0;
-            const typingSpeed = speed || 40; // Use passed speed or default to 40
-
-            function reveal() {
-                if (revealIndex < charsToAnimate.length) {
-                    charsToAnimate[revealIndex].style.display = 'inline';
-                    container.scrollTop = container.scrollHeight;
-                    revealIndex++;
-                    animationTimeout = setTimeout(reveal, Math.random() * typingSpeed + 40);
-                } else {
-                    // Finished, request next Gist
-                    animationTimeout = setTimeout(() => {
-                        const status = document.createElement('em');
-                        status.textContent = "\n\n--- Finished. Fetching new Gist... ---";
-                        codeBlock.appendChild(status);
-                        container.scrollTop = container.scrollHeight;
-                        vscode.postMessage({ command: 'requestNewGist' });
-                    }, 3000);
-                }
-            }
-            reveal();
-        }
-
-        window.addEventListener('message', event => {
-            const message = event.data;
-            if (message.command === 'loadCode') {
-                startAnimation(message.code, message.languageId, message.typingSpeed);
-            }
-        });
-
-        window.addEventListener('keydown', exit);
-
-    </script>
+    <script src="{{scriptUri}}"></script>
 </body>
 </html>

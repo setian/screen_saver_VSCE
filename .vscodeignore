@@ -5,3 +5,6 @@ out/test/**
 src/**
 .gitignore
 tsconfig.json
+*.vsix
+.history-memo/**
+DEVELOPMENT_LOG.md

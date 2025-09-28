@@ -94,24 +94,21 @@ async function fetchRandomGistSnippet(languageId: string): Promise<{code: string
 
             // --- ADVANCED SPAM FILTER ---
             const spamKeywords = ['casino', 'online', 'betting', 'poker', 'slot', 'gambling'];
-            // Regex to allow only printable ASCII and Korean characters in the description.
-            const allowedCharsRegex = /^[ -~ㄱ-ㅎㅏ-ㅣ가-힣]*$/;
+            const cyrillicRegex = /[\u0400-\u04FF]/; // Cyrillic script characters
 
             const cleanGists = freshGists.filter(gist => {
                 const description = gist.description || '';
                 const lowerDesc = description.toLowerCase();
 
-                // Rule 1: Check for English spam keywords
                 if (spamKeywords.some(keyword => lowerDesc.includes(keyword))) {
                     return false;
                 }
 
-                // Rule 2: Check for non-ASCII/Korean characters
-                if (!allowedCharsRegex.test(description)) {
+                if (cyrillicRegex.test(description)) {
                     return false;
                 }
 
-                return true; // It's a clean gist
+                return true;
             });
 
             if (cleanGists.length > 0) {
@@ -208,10 +205,13 @@ async function showScreenSaver(context: vscode.ExtensionContext) {
     }, undefined, context.subscriptions);
 
     const initialLangId = vscode.window.activeTextEditor?.document.languageId || 'plaintext';
+    const configuration = vscode.workspace.getConfiguration('screenSaver');
+    const typingSpeed = configuration.get<number>('typingSpeed', 40);
+
     const initialContent = await fetchRandomGistSnippet(initialLangId);
 
     if (webviewPanel) {
-        webviewPanel.webview.postMessage({ command: 'loadCode', ...initialContent });
+        webviewPanel.webview.postMessage({ command: 'loadCode', typingSpeed, ...initialContent });
     }
 }
 
@@ -237,10 +237,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
     };
 
-    // Reset timer on any text change, selection change, or editor change.
+    // Reset timer on any text change, selection change, editor change, or scroll.
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => resetIdleTimer()));
+    context.subscriptions.push(vscode.window.onDidChangeTextEditorVisibleRanges(() => resetIdleTimer())); // For scrolling
 
     context.subscriptions.push(vscode.window.onDidChangeWindowState(windowState => {
         if (windowState.focused) {

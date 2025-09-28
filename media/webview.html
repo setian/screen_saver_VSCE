@@ -58,7 +58,7 @@
             vscode.postMessage({ command: 'exitScreenSaver' });
         }
 
-        function startAnimation(code, lang) {
+        function startAnimation(code, lang, speed) {
             if (animationTimeout) clearTimeout(animationTimeout);
 
             const codeBlock = document.getElementById('code-block');
@@ -100,7 +100,7 @@
 
             // 5. Reveal characters one by one
             let revealIndex = 0;
-            const typingSpeed = 80; // Slower, more natural speed
+            const typingSpeed = speed || 40; // Use passed speed or default to 40
 
             function reveal() {
                 if (revealIndex < charsToAnimate.length) {
@@ -125,7 +125,7 @@
         window.addEventListener('message', event => {
             const message = event.data;
             if (message.command === 'loadCode') {
-                startAnimation(message.code, message.languageId);
+                startAnimation(message.code, message.languageId, message.typingSpeed);
             }
         });
 

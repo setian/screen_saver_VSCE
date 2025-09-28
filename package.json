@@ -29,11 +29,11 @@
     "configuration": {
       "title": "Coding Screen Saver",
       "properties": {
-        "screenSaver.idleTimeSeconds": {
-          "type": "number",
-          "default": 300,
-          "description": "Number of seconds of inactivity before the screen saver starts."
-        }
+                "screenSaver.idleTimeSeconds": {
+                    "type": "number",
+                    "default": 300,
+                    "description": "The number of seconds of inactivity before the screen saver starts."
+                }
       }
     }
   },

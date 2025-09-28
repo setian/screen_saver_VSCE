@@ -55,11 +55,5 @@
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.19.11",
     "typescript": "^5.3.3"
-  },
-  "files": [
-    "out/**",
-    "media/**",
-    "README.md",
-    "package.json"
-  ]
+  }
 }

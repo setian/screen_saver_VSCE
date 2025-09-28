@@ -12,6 +12,7 @@
 # Production
 /build
 /out
+!/out/extension.js
 
 # Misc
 .DS_Store

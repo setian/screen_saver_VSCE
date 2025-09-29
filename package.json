@@ -15,13 +15,6 @@
   "categories": [
     "Other"
   ],
-  "files": [
-    "out/extension.js",
-    "out/extension.js.map",
-    "media",
-    "package.json",
-    "README.md"
-  ],
   "activationEvents": [
     "onStartupFinished"
   ],

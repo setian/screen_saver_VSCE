@@ -10,7 +10,7 @@ body, html {
     cursor: none;
 }
 
-#container {
+pre#container {
     white-space: pre-wrap;
     font-size: 14px;
     line-height: 1.4;
@@ -20,6 +20,25 @@ body, html {
     right: 10px;
     bottom: 10px;
     overflow-y: auto;
+    margin: 0;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #1E1E1E;
+}
+
+pre#container.hljs,
+.hljs {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #D4D4D4;
+}
+
+#code-block {
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: block;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* Scrollbar styling */

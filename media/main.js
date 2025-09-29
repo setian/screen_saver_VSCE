@@ -208,26 +208,81 @@
         clearAnimation();
 
         codeBlock.textContent = '';
-        const tokens = tokenize(code, lang);
-        const charsToAnimate = [];
 
-        tokens.forEach(token => {
-            for (const char of token.text) {
-                const span = document.createElement('span');
-                span.style.display = 'none';
-                span.textContent = char;
-                if (token.className) {
-                    span.className = token.className;
-                }
-                charsToAnimate.push(span);
-                codeBlock.appendChild(span);
+        const sourceCode = String(code ?? '');
+        const lines = sourceCode.split('\n');
+        const licenseLineSet = new Set();
+        lines.forEach((line, index) => {
+            const trimmed = line.trimStart();
+            if (trimmed.startsWith('// Source:') || trimmed.startsWith('// License:')) {
+                licenseLineSet.add(index);
             }
         });
+
+        const charsToAnimate = [];
+        let currentLine = 0;
+
+        const pushChar = (char, classNames) => {
+            const span = document.createElement('span');
+            const isLicenseLine = licenseLineSet.has(currentLine);
+            span.style.display = isLicenseLine ? 'inline' : 'none';
+            span.textContent = char;
+            span.className = classNames || 'hljs';
+            charsToAnimate.push(span);
+            codeBlock.appendChild(span);
+            if (char === '\n') {
+                currentLine += 1;
+            }
+        };
+
+        let usedHighlight = false;
+        if (window.hljs) {
+            try {
+                const result = window.hljs.highlight(sourceCode, { language: lang, ignoreIllegals: true });
+                const temp = document.createElement('div');
+                temp.innerHTML = result.value;
+
+                const traverse = (node, activeClasses) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.nodeValue || '';
+                        for (const char of text) {
+                            pushChar(char, activeClasses.join(' '));
+                        }
+                        return;
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const elementClasses = Array.from(node.classList || []);
+                        const nextClasses = [...activeClasses, ...elementClasses];
+                        node.childNodes.forEach(child => traverse(child, nextClasses));
+                    }
+                };
+
+                temp.childNodes.forEach(child => traverse(child, ['hljs']));
+                usedHighlight = true;
+            } catch (error) {
+                console.warn('highlight.js failed, falling back to manual tokenization.', error);
+            }
+        }
+
+        if (!usedHighlight) {
+            currentLine = 0;
+            const tokens = tokenize(sourceCode, lang);
+            tokens.forEach(token => {
+                const classNames = token.className ? `hljs ${token.className}` : 'hljs';
+                for (const char of token.text) {
+                    pushChar(char, classNames);
+                }
+            });
+        }
 
         let revealIndex = 0;
         const typingSpeed = typeof speed === 'number' ? Math.max(5, speed) : 40;
 
         const reveal = () => {
+            while (revealIndex < charsToAnimate.length && charsToAnimate[revealIndex].style.display !== 'none') {
+                revealIndex += 1;
+            }
             if (revealIndex < charsToAnimate.length) {
                 charsToAnimate[revealIndex].style.display = 'inline';
                 container.scrollTop = container.scrollHeight;

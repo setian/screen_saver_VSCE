@@ -2,13 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}};">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src {{cspSource}} https://cdnjs.cloudflare.com; script-src {{cspSource}} https://cdnjs.cloudflare.com; img-src https: data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Saver</title>
     <link rel="stylesheet" href="{{styleUri}}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+        integrity="sha512-yB6PpqCOaviX+rerDIF7tntXhkEto9g37hDzOlUg09hhw0OgDoSl00mngThhXlBCdmpa5Z11AUXZfoiV0ep/IQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
 </head>
 <body>
-    <pre id="container"><code id="code-block"></code></pre>
+    <pre id="container" class="hljs"><code id="code-block"></code></pre>
     <script src="{{scriptUri}}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+        integrity="sha512-s2x+H71SVnQ0rqATpfbVE3uN4bGx3XJ+/ANb4g5JPjEYDnS09pmg1svZ3actOeMRry92AzG4St7oFpSd/bFYMQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
 </html>

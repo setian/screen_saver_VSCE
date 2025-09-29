@@ -12,7 +12,9 @@
 # Production
 /build
 /out
+!/out
 !/out/extension.js
+!/out/extension.js.map
 
 # Misc
 .DS_Store

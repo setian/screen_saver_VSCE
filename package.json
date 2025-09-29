@@ -2,7 +2,7 @@
   "name": "coding-screensaver",
   "displayName": "Coding Screen Saver",
   "description": "An immersive, animated screensaver for VS Code that simulates live coding by fetching real code snippets from GitHub.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "Nahceskrap",
   "icon": "media/icons/icon.png",
   "repository": {
@@ -15,10 +15,17 @@
   "categories": [
     "Other"
   ],
+  "files": [
+    "out/extension.js",
+    "out/extension.js.map",
+    "media",
+    "package.json",
+    "README.md"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "out/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -29,18 +36,18 @@
     "configuration": {
       "title": "Coding Screen Saver",
       "properties": {
-                "screenSaver.idleTimeSeconds": {
-                    "type": "number",
-                    "default": 300,
-                    "description": "The number of seconds of inactivity before the screen saver starts."
-                },
-                "screenSaver.typingSpeed": {
-                    "type": "number",
-                    "default": 40,
-                    "minimum": 1,
-                    "maximum": 200,
-                    "description": "Typing speed in milliseconds per character while rendering code."
-                }
+        "screenSaver.idleTimeSeconds": {
+          "type": "number",
+          "default": 300,
+          "description": "The number of seconds of inactivity before the screen saver starts."
+        },
+        "screenSaver.typingSpeed": {
+          "type": "number",
+          "default": 40,
+          "minimum": 1,
+          "maximum": 200,
+          "description": "Typing speed in milliseconds per character while rendering code."
+        }
       }
     }
   },

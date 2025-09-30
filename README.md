@@ -16,7 +16,7 @@ The screensaver will activate automatically when there has been no activity (typ
 - **Immediate License Header**: The `// Source` and `// License` lines appear instantly, while the body plays back via the typing animation to preserve the reading flow.
 - **GitHub Rate-Limit Handling**: When a 403 rate-limit response arrives, the extension cools that repository down and seamlessly falls back to local offline snippets.
 - **Offline Code Pack**: A curated `docs/code-pack.json` keeps multilingual tricks, memes, and interview questions ready when GitHub is unavailable.
-- **All-Activity Idle Detection**: Keyboard, mouse, terminal, notebook, 그리고 웹뷰 상호작용까지 감지하여 실제로 쉬고 있을 때만 스크린세이버가 실행됩니다.
+- **All-Activity Idle Detection**: Watches keyboard, mouse, terminal, notebook, and even screensaver webview activity so it only launches when you are truly idle.
 - **Infinite Loop**: Each snippet hands off to the next one automatically.
 - **Configurable**: Adjust the idle timeout and typing speed from the VS Code settings UI or `settings.json`.
 

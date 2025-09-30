@@ -5,6 +5,8 @@
 
     let animationTimeout;
     const grammarCache = new Map();
+    let lastUserActivityPost = 0;
+    const USER_ACTIVITY_DEBOUNCE_MS = 1500;
 
     const CL_LIKE_KEYWORDS = [
         'abstract', 'as', 'assert', 'async', 'await', 'break', 'case', 'catch', 'class', 'const', 'continue',
@@ -189,6 +191,15 @@
         return tokens;
     }
 
+    function postUserActivity() {
+        const now = Date.now();
+        if (now - lastUserActivityPost < USER_ACTIVITY_DEBOUNCE_MS) {
+            return;
+        }
+        lastUserActivityPost = now;
+        vscode.postMessage({ command: 'userActivity' });
+    }
+
     function clearAnimation() {
         if (animationTimeout) {
             clearTimeout(animationTimeout);
@@ -314,6 +325,11 @@
             const speed = Number.isFinite(parsedSpeed) ? parsedSpeed : 40;
             startAnimation(String(message.code ?? ''), lang, speed);
         }
+    });
+
+    const activityEvents = ['mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart'];
+    activityEvents.forEach(eventName => {
+        window.addEventListener(eventName, () => postUserActivity(), { passive: true });
     });
 
     window.addEventListener('keydown', exit);

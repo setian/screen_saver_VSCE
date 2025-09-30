@@ -1,0 +1,377 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "languageId": "c",
+      "title": "Check if multiple bits are set",
+      "tags": ["bitwise", "macro"],
+      "code": "/* C · Check if more than one bit is set */\nstatic inline int has_multiple_bits_set(unsigned int mask)\n{\n    return mask && (mask & (mask - 1));\n}\n"
+    },
+    {
+      "languageId": "c",
+      "title": "Swap macro with safety",
+      "tags": ["macro"],
+      "code": "/* C · Swap two values safely */\n#define SWAP(T, A, B) do { \\n    T _tmp = (A); \\n    (A) = (B); \\n    (B) = _tmp; \\n} while (0)\n"
+    },
+    {
+      "languageId": "c",
+      "title": "Deferred cleanup helper",
+      "tags": ["macro", "raii"],
+      "code": "/* C · Simple defer helper */\n#define CONCAT_INNER(a,b) a##b\n#define CONCAT(a,b) CONCAT_INNER(a,b)\n#define DEFER(start, end) for (int CONCAT(_i_, __LINE__) = ((start), 0); !CONCAT(_i_, __LINE__); ((end), ++CONCAT(_i_, __LINE__)))\n"
+    },
+    {
+      "languageId": "cpp",
+      "title": "Scope guard",
+      "tags": ["raii"],
+      "code": "// C++ · Scope exit helper\n#include <utility>\n\nclass ScopeExit {\npublic:\n    template <typename F> explicit ScopeExit(F&& f) : func(std::forward<F>(f)), active(true) {}\n    ScopeExit(ScopeExit&& other) noexcept : func(std::move(other.func)), active(other.active) { other.active = false; }\n    ~ScopeExit() { if (active && func) func(); }\nprivate:\n    std::function<void()> func;\n    bool active;\n};\n"
+    },
+    {
+      "languageId": "cpp",
+      "title": "constexpr prime check",
+      "tags": ["constexpr", "algorithm"],
+      "code": "// C++ · Prime check at compile time\nconstexpr bool is_prime(unsigned n, unsigned i = 2) {\n    return (n < 2) ? false : (i * i > n) ? true : (n % i == 0 ? false : is_prime(n, i + 1));\n}\nstatic_assert(is_prime(97), \"97 should be prime\");\n"
+    },
+    {
+      "languageId": "csharp",
+      "title": "Timing with using var",
+      "tags": ["diagnostics"],
+      "code": "// C# · Quick timings with Stopwatch\nusing System;\nusing System.Diagnostics;\n\nusing var sw = Stopwatch.StartNew();\nDoExpensiveThing();\nsw.Stop();\nConsole.WriteLine($\"Elapsed: {sw.ElapsedMilliseconds} ms\");\n"
+    },
+    {
+      "languageId": "csharp",
+      "title": "Span slicing",
+      "tags": ["memory"],
+      "code": "// C# · Iterate over fixed-size windows using Span\nSpan<int> data = stackalloc int[] { 1, 2, 3, 4, 5, 6 };\nconst int window = 3;\nfor (var i = 0; i <= data.Length - window; i++)\n{\n    var slice = data.Slice(i, window);\n    Console.WriteLine(string.Join(\", \", slice.ToArray()));\n}\n"
+    },
+    {
+      "languageId": "go",
+      "title": "Context timeout",
+      "tags": ["concurrency"],
+      "code": "// Go · Context with timeout\nctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)\ndefer cancel()\nif err := doWork(ctx); err != nil {\n    log.Printf(\"failed: %v\", err)\n}\n"
+    },
+    {
+      "languageId": "go",
+      "title": "WaitGroup pipeline",
+      "tags": ["concurrency"],
+      "code": "// Go · Simple fan-out pipeline\nvar wg sync.WaitGroup\nch := make(chan int)\nfor i := 0; i < 3; i++ {\n    wg.Add(1)\n    go func(worker int) {\n        defer wg.Done()\n        for n := range ch {\n            log.Printf(\"worker %d -> %d\", worker, n*n)\n        }\n    }(i)\n}\nfor n := 1; n <= 5; n++ { ch <- n }\nclose(ch)\nwg.Wait()\n"
+    },
+    {
+      "languageId": "rust",
+      "title": "Option chaining",
+      "tags": ["option"],
+      "code": "// Rust · Option chaining with if let\nfn main() {\n    let config = std::env::var(\"SCREENSAVER_THEME\").ok();\n    if let Some(theme) = config.filter(|v| !v.is_empty()) {\n        println!(\"Theme set to {theme}\");\n    } else {\n        println!(\"Fallback theme\");\n    }\n}\n"
+    },
+    {
+      "languageId": "rust",
+      "title": "Result map_err",
+      "tags": ["error-handling"],
+      "code": "// Rust · Map errors into anyhow\nfn read_config(path: &str) -> anyhow::Result<String> {\n    std::fs::read_to_string(path).map_err(|e| anyhow::Context::context(e, format!(\"reading {path}\")))\n}\n"
+    },
+    {
+      "languageId": "python",
+      "title": "Dataclass repr",
+      "tags": ["dataclass"],
+      "code": "# Python · Dataclass with computed field\nfrom dataclasses import dataclass\n\n@dataclass(slots=True)\nclass Repo:\n    owner: str\n    name: str\n\n    @property\n    def slug(self) -> str:\n        return f\"{self.owner}/{self.name}\"\n\nprint(Repo('setian', 'screensaver').slug)\n"
+    },
+    {
+      "languageId": "python",
+      "title": "Top K with heapq",
+      "tags": ["algorithm"],
+      "code": "# Python · Top 3 values using heapq\nimport heapq\n\nscores = [42, 7, 88, 21, 55, 13]\ntop_three = heapq.nlargest(3, scores)\nprint(top_three)\n"
+    },
+    {
+      "languageId": "python",
+      "title": "Kadane's algorithm",
+      "tags": ["algorithm"],
+      "code": "# Python · Maximum subarray sum\ndef max_subarray(nums):\n    best = cur = nums[0]\n    for value in nums[1:]:\n        cur = max(value, cur + value)\n        best = max(best, cur)\n    return best\n\nprint(max_subarray([-2, 1, -3, 4, -1, 2, 1, -5, 4]))\n"
+    },
+    {
+      "languageId": "typescript",
+      "title": "Custom asserts",
+      "tags": ["types"],
+      "code": "// TypeScript · Runtime guard with asserts\nfunction assertIsString(value: unknown): asserts value is string {\n  if (typeof value !== 'string') {\n    throw new TypeError('Expected string');\n  }\n}\n\nconst maybe = Math.random() > 0.5 ? 'ok' : 42;\nassertIsString(maybe);\nconst upper = maybe.toUpperCase();\nconsole.log(upper);\n"
+    },
+    {
+      "languageId": "typescript",
+      "title": "Map satisfies record",
+      "tags": ["types"],
+      "code": "// TypeScript · satisfies operator for route map\nconst routes = { home: '/', about: '/about', docs: '/docs' } as const satisfies Record<string, `/${string}`>;\nconst go = (key: keyof typeof routes) => routes[key];\nconsole.log(go('docs'));\n"
+    },
+    {
+      "languageId": "javascript",
+      "title": "Event loop quiz",
+      "tags": ["quiz"],
+      "code": "// JavaScript · Microtask vs macrotask\nconsole.log('A');\nqueueMicrotask(() => console.log('B'));\nsetTimeout(() => console.log('C'));\nPromise.resolve().then(() => console.log('D'));\nconsole.log('E');\n"
+    },
+    {
+      "languageId": "javascript",
+      "title": "Relative time helper",
+      "tags": ["i18n"],
+      "code": "// JavaScript · Human readable relative time\nconst rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });\nfunction ago(minutes) {\n  return rtf.format(-minutes, 'minute');\n}\nconsole.log(ago(5));\n"
+    },
+    {
+      "languageId": "java",
+      "title": "Try-with resources",
+      "tags": ["io"],
+      "code": "// Java · Try-with-resources example\ntry (var reader = Files.newBufferedReader(Path.of(\"config.ini\"))) {\n    reader.lines().forEach(System.out::println);\n} catch (IOException ex) {\n    ex.printStackTrace();\n}\n"
+    },
+    {
+      "languageId": "java",
+      "title": "Record pattern",
+      "tags": ["records"],
+      "code": "// Java · Record with compact constructor\nrecord Point(int x, int y) {\n    Point {\n        if (x == 0 && y == 0) throw new IllegalArgumentException(\"origin not allowed\");\n    }\n}\n"
+    },
+    {
+      "languageId": "kotlin",
+      "title": "Measure time",
+      "tags": ["timing"],
+      "code": "// Kotlin · Measure execution time\nval elapsed = measureTimeMillis {\n    repeat(1_000_000) { it * it }\n}\nprintln(\"Elapsed: $elapsed ms\")\n"
+    },
+    {
+      "languageId": "swift",
+      "title": "Result sugar",
+      "tags": ["error-handling"],
+      "code": "// Swift · Result with mapError\nfunc readConfig() -> Result<String, Error> {\n    Result { try String(contentsOfFile: \"Settings.plist\") }\n        .mapError { error in NSError(domain: \"ScreenSaver\", code: 1, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]) }\n}\n"
+    },
+    {
+      "languageId": "scala",
+      "title": "Future sequencing",
+      "tags": ["concurrency"],
+      "code": "// Scala · Sequence futures\nimport scala.concurrent._\nimport scala.concurrent.duration._\nimport ExecutionContext.Implicits.global\n\nval list = List(1, 2, 3).map(n => Future(n * n))\nval aggregated = Future.sequence(list)\nprintln(Await.result(aggregated, 1.second))\n"
+    },
+    {
+      "languageId": "ruby",
+      "title": "Counting with tally",
+      "tags": ["enumerable"],
+      "code": "# Ruby · Frequency count with tally\nfruits = %w[apple apple kiwi pear kiwi kiwi]\nputs fruits.tally\n"
+    },
+    {
+      "languageId": "php",
+      "title": "Array reduce",
+      "tags": ["collection"],
+      "code": "<?php\n// PHP · Sum only positive numbers\n$values = [3, -4, 8, 0, 5];\n$total = array_reduce($values, fn($carry, $value) => $value > 0 ? $carry + $value : $carry, 0);\necho $total;\n"
+    },
+    {
+      "languageId": "sql",
+      "title": "Generate Fibonacci",
+      "tags": ["cte"],
+      "code": "-- SQL · Fibonacci sequence with recursive CTE\nWITH RECURSIVE fib(n, a, b) AS (\n  SELECT 1, 0, 1\n  UNION ALL\n  SELECT n + 1, b, a + b FROM fib WHERE n < 10\n)\nSELECT n, a FROM fib;\n"
+    },
+    {
+      "languageId": "shell",
+      "title": "Trap temporary directory",
+      "tags": ["bash", "macro"],
+      "code": "# Shell · Safe temporary directory\nset -euo pipefail\nWORKDIR=\"$(mktemp -d)\"\ncleanup() { rm -rf \"$WORKDIR\"; }\ntrap cleanup EXIT INT TERM\n"
+    },
+    {
+      "languageId": "shell",
+      "title": "TODO finder",
+      "tags": ["tooling"],
+      "code": "# Shell · Find TODO comments\nrg --no-heading --color never 'TODO' src\n"
+    },
+    {
+      "languageId": "powershell",
+      "title": "Largest files",
+      "tags": ["tooling"],
+      "code": "# PowerShell · Top 5 largest files\nGet-ChildItem -Recurse | Sort-Object Length -Descending | Select-Object -First 5 Name, Length\n"
+    },
+    {
+      "languageId": "html",
+      "title": "Expandable details",
+      "tags": ["ui"],
+      "code": "<!-- HTML · Toggle instructions -->\n<details open>\n  <summary>Keyboard shortcuts</summary>\n  <ul>\n    <li>Ctrl + Shift + P — Command Palette</li>\n    <li>Ctrl + K Z — Zen mode</li>\n  </ul>\n</details>\n"
+    },
+    {
+      "languageId": "css",
+      "title": "has selector",
+      "tags": ["css"],
+      "code": "/* CSS · Highlight checkbox row when checked */\n.settings-row:has(input:checked) {\n  background: rgba(56, 189, 248, 0.12);\n}\n"
+    },
+    {
+      "languageId": "json",
+      "title": "tsconfig base",
+      "tags": ["config"],
+      "code": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"commonjs\",\n    \"strict\": true,\n    \"esModuleInterop\": true\n  }\n}\n"
+    },
+    {
+      "languageId": "yaml",
+      "title": "GitHub action",
+      "tags": ["ci"],
+      "code": "# YAML · Minimal Node CI\nname: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n      - run: npm test\n"
+    },
+    {
+      "languageId": "lua",
+      "title": "Table shallow copy",
+      "tags": ["table"],
+      "code": "-- Lua · Shallow copy helper\nlocal function clone(tbl)\n  local out = {}\n  for k, v in pairs(tbl) do out[k] = v end\n  return out\nend\nprint(clone({ answer = 42 }).answer)\n"
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Dad joke",
+      "tags": ["humor"],
+      "code": "Dad joke · Why do programmers prefer dark mode? Light attracts bugs."
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Bit tip",
+      "tags": ["macro"],
+      "code": "Tip · Use mask & (mask - 1) to strip the lowest set bit."
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Interview question",
+      "tags": ["interview"],
+      "code": "Interview · Explain optimistic vs pessimistic locking. When would you choose each?"
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Debug wisdom",
+      "tags": ["meme"],
+      "code": "Meme · There are two hard problems in CS: cache invalidation, naming things, and off-by-one errors."
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Retro meme",
+      "tags": ["humor"],
+      "code": "Meme · Works on my machine (TM) -- the sequel nobody wanted."
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Terminal tip",
+      "tags": ["tooling"],
+      "code": "Tip · Pipe through `bat -l language` for colorful previews without leaving the terminal."
+    },
+    {
+      "languageId": "c",
+      "title": "Rotate left macro",
+      "tags": ["bitwise", "macro"],
+      "code": "/* C · Rotate bits left */\n#define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))\n"
+    },
+    {
+      "languageId": "c",
+      "title": "Branchless clamp",
+      "tags": ["macro"],
+      "code": "/* C · Clamp value without branches */\nstatic inline int clamp_int(int v, int lo, int hi)\n{\n    if (v < lo) v = lo;\n    if (v > hi) v = hi;\n    return v;\n}\n"
+    },
+    {
+      "languageId": "cpp",
+      "title": "constexpr gcd",
+      "tags": ["constexpr", "math"],
+      "code": "// C++ · constexpr gcd\nconstexpr unsigned gcd(unsigned a, unsigned b) {\n    return b == 0 ? a : gcd(b, a % b);\n}\nstatic_assert(gcd(24, 18) == 6);\n"
+    },
+    {
+      "languageId": "csharp",
+      "title": "Switch expression patterns",
+      "tags": ["pattern-matching"],
+      "code": "// C# · Pattern matching switch\nstring Describe(object value) => value switch\n{\n    int i and > 0 => $\"positive int {i}\",\n    string s when s.Length > 5 => $\"long string '{s}'\",\n    null => \"null\",\n    _ => \"unknown\"\n};\n"
+    },
+    {
+      "languageId": "go",
+      "title": "Generic filter",
+      "tags": ["generics"],
+      "code": "// Go · Generic filter helper\nfunc Filter[T any](in []T, keep func(T) bool) []T {\n    out := make([]T, 0, len(in))\n    for _, v := range in {\n        if keep(v) {\n            out = append(out, v)\n        }\n    }\n    return out\n}\n"
+    },
+    {
+      "languageId": "rust",
+      "title": "Iterator windows",
+      "tags": ["iterator"],
+      "code": "// Rust · Sliding windows\nfn main() {\n    let data = [1, 2, 3, 4, 5];\n    for win in data.windows(3) {\n        println!(\"{:?}\", win);\n    }\n}\n"
+    },
+    {
+      "languageId": "rust",
+      "title": "Bitflags example",
+      "tags": ["bitwise"],
+      "code": "// Rust · bitflags usage\nbitflags::bitflags! {\n    struct Mode: u32 {\n        const READ = 0b001;\n        const WRITE = 0b010;\n        const EXEC = 0b100;\n    }\n}\nprintln!(\"mode: {:?}\", Mode::READ | Mode::EXEC);\n"
+    },
+    {
+      "languageId": "python",
+      "title": "Walrus counter",
+      "tags": ["syntax"],
+      "code": "# Python \u00b7 Walrus operator in loop\nline_count = 0\nwhile (line := input(\"> \")):\n    line_count += 1\nprint(f\"Lines entered: {line_count}\")\n"
+    },
+    {
+      "languageId": "python",
+      "title": "F-string debug",
+      "tags": ["syntax"],
+      "code": "# Python · f-string = spec\nvalue = 42\nprint(f\"Debug -> {value=}\")\n"
+    },
+    {
+      "languageId": "typescript",
+      "title": "Template literal map",
+      "tags": ["types"],
+      "code": "// TypeScript · Template literal types\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ButtonEvents = EventName<'click' | 'hover'>;\nconst handler: Record<ButtonEvents, () => void> = {\n  onClick: () => {},\n  onHover: () => {},\n};\n"
+    },
+    {
+      "languageId": "javascript",
+      "title": "RAF game loop",
+      "tags": ["animation"],
+      "code": "// JavaScript · requestAnimationFrame loop\nlet last = performance.now();\nfunction tick(now) {\n  const dt = (now - last) / 1000;\n  last = now;\n  update(dt);\n  render();\n  requestAnimationFrame(tick);\n}\nrequestAnimationFrame(tick);\n"
+    },
+    {
+      "languageId": "java",
+      "title": "Sealed hierarchy",
+      "tags": ["sealed"],
+      "code": "// Java · Sealed interface and permits\nsealed interface Shape permits Circle, Rectangle {}\nrecord Circle(double radius) implements Shape {}\nrecord Rectangle(double width, double height) implements Shape {}\n"
+    },
+    {
+      "languageId": "kotlin",
+      "title": "Sequence example",
+      "tags": ["sequence"],
+      "code": "// Kotlin · Lazy sequence pipeline\nval evens = generateSequence(1) { it + 1 }\n    .filter { it % 2 == 0 }\n    .take(5)\nprintln(evens.toList())\n"
+    },
+    {
+      "languageId": "swift",
+      "title": "CompactMap",
+      "tags": ["collection"],
+      "code": "// Swift \u00b7 compactMap usage\nlet values = [\"1\", \"two\", \"3\"]\nlet ints = values.compactMap(Int.init)\nprint(ints)\n"
+    },
+    {
+      "languageId": "scala",
+      "title": "Partial function",
+      "tags": ["pattern-matching"],
+      "code": "// Scala \u00b7 PartialFunction collect\nval data = List(\"42\", \"oops\", \"7\")\nval ints = data.collect { case s if s.forall(_.isDigit) => s.toInt }\nprintln(ints)\n"
+    },
+    {
+      "languageId": "sql",
+      "title": "Lateral join",
+      "tags": ["sql"],
+      "code": "-- SQL · LATERAL join example\nSELECT u.name, p.title\nFROM users u\nCROSS JOIN LATERAL (\n  SELECT title FROM posts WHERE posts.author_id = u.id ORDER BY created_at DESC LIMIT 1\n) p;\n"
+    },
+    {
+      "languageId": "shell",
+      "title": "fzf pick recent git branches",
+      "tags": ["tooling"],
+      "code": "# Shell · Checkout recent branch with fzf\ngit for-each-ref --sort=-committerdate refs/heads/ |\n  awk '{print $NF}' |\n  fzf |\n  xargs git checkout\n"
+    },
+    {
+      "languageId": "powershell",
+      "title": "HTTP ping",
+      "tags": ["network"],
+      "code": "# PowerShell · Quick HTTP status check\n$uri = 'https://example.com'\n(Invoke-WebRequest -Uri $uri -Method Head -TimeoutSec 5).StatusCode\n"
+    },
+    {
+      "languageId": "lua",
+      "title": "Memoize helper",
+      "tags": ["memoization"],
+      "code": "-- Lua · Memoize function results\nlocal function memoize(fn)\n  local cache = {}\n  return function(arg)\n    if cache[arg] == nil then\n      cache[arg] = fn(arg)\n    end\n    return cache[arg]\n  end\nend\n"
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Regex reminder",
+      "tags": ["cheatsheet"],
+      "code": "Tip · Use (?!pattern) for negative lookahead and (?<=pattern) for positive lookbehind." 
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Interview warm-up",
+      "tags": ["interview"],
+      "code": "Interview · How does path compression improve union-find?" 
+    },
+    {
+      "languageId": "plaintext",
+      "title": "Build tip",
+      "tags": ["tooling"],
+      "code": "Tip · Cache npm installs in CI with setup-node's cache option to cut build times." 
+    }
+  ]
+}

@@ -2,102 +2,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const FALLBACK_SNIPPETS = [
+const BUILT_IN_FALLBACK_SNIPPETS: ReadonlyArray<{ code: string; languageId: string }> = [
     {
-        code: '// Offline snippet · JavaScript matrix rain demo\n' +
-            'class MatrixRain {\n' +
-            '  constructor(canvas, speed = 50) {\n' +
-            '    this.canvas = canvas;\n' +
-            '    this.ctx = canvas.getContext(\'2d\');\n' +
-            '    this.fontSize = 16;\n' +
-            '    this.columns = Math.floor(canvas.width / this.fontSize);\n' +
-            '    this.drops = Array.from({ length: this.columns }).fill(canvas.height);\n' +
-            '    this.speed = speed;\n' +
-            '  }\n\n' +
-            '  draw() {\n' +
-            '    this.ctx.fillStyle = \'rgba(0, 0, 0, 0.05)\';\n' +
-            '    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);\n' +
-            '    this.ctx.fillStyle = \'#0F0\';\n' +
-            '    this.ctx.font = `${this.fontSize}px monospace`;\n' +
-            '    this.drops.forEach((dropY, column) => {\n' +
-            '      const char = String.fromCharCode(33 + Math.random() * 94);\n' +
-            '      const x = column * this.fontSize;\n' +
-            '      const y = dropY * this.fontSize;\n' +
-            '      this.ctx.fillText(char, x, y);\n' +
-            '      this.drops[column] = dropY * this.fontSize > this.canvas.height && Math.random() > 0.975 ? 0 : dropY + 1;\n' +
-            '    });\n' +
-            '  }\n\n' +
-            '  animate() {\n' +
-            '    setInterval(() => this.draw(), this.speed);\n' +
-            '  }\n' +
-            '}',
-        languageId: 'javascript'
-    },
-    {
-        code: '# Offline snippet · Python one-liner trivia\n' +
-            'text = "banana"\n' +
-            'print("내림차순정렬:", "".join(sorted(text, reverse=True)))\n' +
-            'print("모두 a 포함?:", all(ch == "a" for ch in text))\n' +
-            'print("하나라도 b 포함?:", any(ch == "b" for ch in text))\n' +
-            'print("역순:", text[::-1])',
-        languageId: 'python'
-    },
-    {
-        code: '# Offline snippet · Python context manager\n' +
-            'from pathlib import Path\n\n' +
-            'def read_config(path: Path) -> str:\n' +
-            '    with path.open() as handle:\n' +
-            '        return handle.read().strip()\n\n' +
-            'print(read_config(Path("settings.ini")))',
-        languageId: 'python'
-    },
-    {
-        code: '// Offline snippet · JavaScript console tricks\n' +
-            'const squares = Array.from({ length: 5 }, (_, i) => ({ i, square: i * i }));\n' +
-            'console.table(squares);\n' +
-            'console.log("isFinite?", Number.isFinite(42 / 0));',
-        languageId: 'javascript'
-    },
-    {
-        code: '# Offline snippet · JavaScript debounce utility\n' +
-            'function debounce(fn, delay = 200) {\n' +
-            '  let timer;\n' +
-            '  return (...args) => {\n' +
-            '    clearTimeout(timer);\n' +
-            '    timer = setTimeout(() => fn(...args), delay);\n' +
-            '  };\n' +
-            '}\n\n' +
-            'const log = debounce(value => console.log("검색:", value), 300);\nlog("hello");',
-        languageId: 'javascript'
-    },
-    {
-        code: '/* Offline snippet · C 매크로와 포인터 챌린지 */\n#include <stdio.h>\n\n#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))\n\nint main(void) {\n    const char *words[] = {"VS", "Code", "Screensaver"};\n    for (size_t i = 0; i < ARRAY_SIZE(words); ++i) {\n        printf("%zu -> %s\\n", i, *(words + i));\n    }\n    return 0;\n}',
-        languageId: 'c'
-    },
-    {
-        code: '/* Offline snippet · C 메모리 덤프 */\n#include <stdio.h>\n\nvoid dump(const void *data, size_t len) {\n    const unsigned char *bytes = data;\n    for (size_t i = 0; i < len; ++i) {\n        printf("%02X%s", bytes[i], (i + 1) % 8 ? " " : "\\n");\n    }\n}\n\nint main(void) {\n    int value = 0x12345678;\n    dump(&value, sizeof value);\n    return 0;\n}',
-        languageId: 'c'
-    },
-    {
-        code: '# Offline snippet · Rust Option pattern\nfn main() {\n    let config = std::env::var("SCREENSAVER_THEME").ok();\n    match config.as_deref() {\n        Some("matrix") => println!("매트릭스 모드"),\n        Some(other) => println!("테마: {}", other),\n        None => println!("기본 테마"),\n    }\n}',
-        languageId: 'rust'
-    },
-    {
-        code: '// Offline snippet · TypeScript 타입 퀴즈\n' +
-            'type Flatten<T> = T extends Array<infer U> ? U : T;\n' +
-            'type Result = Flatten<number[]>; // Result는 number\n' +
-            'const result: Result = 123;',
-        languageId: 'typescript'
-    },
-    {
-        code: '# Offline snippet · Brainfuck Hello World\n' +
-            '++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.',
-        languageId: 'brainfuck'
-    },
-    {
-        code: '// Offline snippet · Plaintext 퀴즈\n' +
-            'print("".join(sorted("banana")))  # 결과는?\n' +
-            '# 버튼을 누르면 정답! -> aaabnn',
+        code: '// Offline fallback: add entries to docs/code-pack.json (or .md) to customize snippets.',
         languageId: 'plaintext'
     }
 ];
@@ -107,6 +14,8 @@ let idleTimer: NodeJS.Timeout | undefined;
 let lastRepositoryKey: string | undefined;
 let lastKnownLanguageId = 'plaintext';
 const repoCooldowns = new Map<string, number>();
+let resetIdleTimerRef: (() => void) | undefined;
+let codePackSnippets: { code: string; languageId: string }[] = [];
 
 // --- Repository cache ---
 interface RepoFileEntry {
@@ -124,27 +33,52 @@ const LANGUAGE_ALIASES: Record<string, string> = {
     'objective-c++': 'cpp',
     'objective-c': 'c',
     'shellscript': 'shell',
-    'jsonc': 'json'
+    'shell': 'shell',
+    'bash': 'shell',
+    'zsh': 'shell',
+    'sh': 'shell',
+    'jsonc': 'json',
+    'json5': 'json',
+    'md': 'plaintext',
+    'markdown': 'plaintext',
+    'c#': 'csharp',
+    'cs': 'csharp',
+    'ps': 'powershell',
+    'ps1': 'powershell',
+    'psm1': 'powershell',
+    'psd1': 'powershell',
+    'powershellscript': 'powershell',
+    'yml': 'yaml',
+    'ts': 'typescript',
+    'py': 'python',
+    'rb': 'ruby'
 };
 
 const LANGUAGE_EXTENSION_MAP: Record<string, string[]> = {
+    'brainfuck': ['.bf'],
     'c': ['.c', '.h'],
+    'csharp': ['.cs'],
     'cpp': ['.cc', '.cpp', '.cxx', '.hpp', '.hh', '.hxx'],
+    'css': ['.css'],
     'go': ['.go'],
+    'html': ['.html', '.htm'],
     'java': ['.java'],
     'javascript': ['.js', '.jsx', '.mjs', '.cjs'],
     'json': ['.json'],
     'kotlin': ['.kt'],
-    'ruby': ['.rb'],
+    'lua': ['.lua'],
+    'php': ['.php'],
+    'powershell': ['.ps1', '.psm1'],
     'python': ['.py'],
+    'ruby': ['.rb'],
     'rust': ['.rs'],
-    'swift': ['.swift'],
     'scala': ['.scala'],
-    'shell': ['.sh'],
+    'shell': ['.sh', '.bash', '.zsh'],
+    'sql': ['.sql'],
+    'swift': ['.swift'],
     'typescript': ['.ts', '.tsx'],
     'yaml': ['.yml', '.yaml'],
-    'plaintext': ['.md', '.markdown', '.txt'],
-    'brainfuck': ['.bf']
+    'plaintext': ['.md', '.markdown', '.txt']
 };
 
 const KNOWN_TEXT_EXTENSIONS = new Set(Object.values(LANGUAGE_EXTENSION_MAP).flat());
@@ -692,7 +626,7 @@ async function fetchRandomRepoSnippet(languageId: string): Promise<{ code: strin
 
     logWithTimestamp('No suitable repository file found after checking all sources. Using fallback snippet.', 'warn');
     lastRepositoryKey = undefined;
-    return FALLBACK_SNIPPETS[Math.floor(Math.random() * FALLBACK_SNIPPETS.length)];
+    return getRandomFallbackSnippet(normalizedLang);
 }
 
 async function showScreenSaver(context: vscode.ExtensionContext) {
@@ -734,6 +668,9 @@ async function showScreenSaver(context: vscode.ExtensionContext) {
                     webviewPanel.webview.postMessage({ command: 'loadCode', ...newContent });
                 }
                 break;
+            case 'userActivity':
+                resetIdleTimerRef?.();
+                break;
         }
     }, undefined, context.subscriptions);
 
@@ -769,6 +706,16 @@ function getWebviewContent(context: vscode.ExtensionContext, webview: vscode.Web
 export function activate(context: vscode.ExtensionContext) {
     logWithTimestamp('"coding-screensaver" is now active.');
 
+    // Try to load dynamic code-pack snippets from docs/code-pack.md (optional).
+    try {
+        loadCodePackSnippets(context);
+        if (codePackSnippets.length > 0) {
+            logWithTimestamp(`Loaded ${codePackSnippets.length} code-pack fallback snippets.`);
+        }
+    } catch (err: any) {
+        logWithTimestamp('Failed to load code-pack snippets.', 'warn', err);
+    }
+
     const resetIdleTimer = () => {
         if (idleTimer) {
             clearTimeout(idleTimer);
@@ -794,12 +741,40 @@ export function activate(context: vscode.ExtensionContext) {
             logWithTimestamp('Idle timer disabled via configuration.');
         }
     };
+    resetIdleTimerRef = resetIdleTimer;
 
     // Reset timer on any text change, selection change, editor change, or scroll.
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => resetIdleTimer()));
     context.subscriptions.push(vscode.window.onDidChangeTextEditorVisibleRanges(() => resetIdleTimer())); // For scrolling
+    context.subscriptions.push(vscode.window.onDidChangeActiveTerminal(() => resetIdleTimer()));
+    context.subscriptions.push(vscode.window.onDidOpenTerminal(() => resetIdleTimer()));
+    context.subscriptions.push(vscode.window.onDidCloseTerminal(() => resetIdleTimer()));
+    if (vscode.window.onDidChangeActiveNotebookEditor) {
+        context.subscriptions.push(vscode.window.onDidChangeActiveNotebookEditor(() => resetIdleTimer()));
+    }
+    if (vscode.window.onDidChangeVisibleNotebookEditors) {
+        context.subscriptions.push(vscode.window.onDidChangeVisibleNotebookEditors(() => resetIdleTimer()));
+    }
+    const onDidWriteTerminalData = (vscode.window as any).onDidWriteTerminalData as vscode.Event<unknown> | undefined;
+    if (onDidWriteTerminalData) {
+        context.subscriptions.push(onDidWriteTerminalData(() => resetIdleTimer()));
+    }
+
+    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(() => resetIdleTimer()));
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(() => resetIdleTimer()));
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(() => resetIdleTimer()));
+    if ((vscode.workspace as any).onDidChangeNotebookDocument) {
+        context.subscriptions.push((vscode.workspace as any).onDidChangeNotebookDocument(() => resetIdleTimer()));
+    }
+    if (typeof (vscode.commands as any).onDidExecuteCommand === 'function') {
+        context.subscriptions.push(vscode.commands.onDidExecuteCommand(event => {
+            if (!event?.command?.startsWith('screenSaver.')) {
+                resetIdleTimer();
+            }
+        }));
+    }
 
     context.subscriptions.push(vscode.window.onDidChangeWindowState(windowState => {
         if (windowState.focused) {
@@ -820,4 +795,148 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
     if (webviewPanel) webviewPanel.dispose();
     if (idleTimer) clearTimeout(idleTimer);
+    resetIdleTimerRef = undefined;
+}
+
+// --- Fallback helpers ---
+function getRandomFallbackSnippet(preferredLanguageId?: string): { code: string; languageId: string } {
+    const basePool = codePackSnippets.length > 0
+        ? codePackSnippets
+        : Array.from(BUILT_IN_FALLBACK_SNIPPETS);
+    const normalized = preferredLanguageId ? normalizeLanguageId(preferredLanguageId) : undefined;
+    const filtered = normalized ? basePool.filter(s => normalizeLanguageId(s.languageId) === normalized) : [];
+    const pool = filtered.length > 0 ? filtered : basePool;
+    if (pool.length === 0) {
+        return BUILT_IN_FALLBACK_SNIPPETS[0];
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function loadCodePackSnippets(context: vscode.ExtensionContext): void {
+    try {
+        const jsonUri = vscode.Uri.joinPath(context.extensionUri, 'docs', 'code-pack.json');
+        const mdUri = vscode.Uri.joinPath(context.extensionUri, 'docs', 'code-pack.md');
+
+        if (fs.existsSync(jsonUri.fsPath)) {
+            const json = fs.readFileSync(jsonUri.fsPath, 'utf8');
+            codePackSnippets = parseCodePackJson(json);
+        } else if (fs.existsSync(mdUri.fsPath)) {
+            const md = fs.readFileSync(mdUri.fsPath, 'utf8');
+            codePackSnippets = parseCodePackMarkdown(md);
+        } else {
+            codePackSnippets = [];
+        }
+    } catch (error) {
+        codePackSnippets = [];
+        logWithTimestamp('Failed to parse code-pack content.', 'warn', error);
+    }
+
+    if (codePackSnippets.length === 0) {
+        logWithTimestamp('No code-pack entries detected. Using built-in fallback snippets.', 'warn');
+    }
+}
+
+function parseCodePackMarkdown(md: string): { code: string; languageId: string }[] {
+    const results: { code: string; languageId: string }[] = [];
+    const seen = new Set<string>();
+
+    // Extract fenced code blocks ```lang\n...\n```
+    const fenceRe = /```([A-Za-z0-9_+-]+)?\n([\s\S]*?)```/g;
+    let m: RegExpExecArray | null;
+    while ((m = fenceRe.exec(md)) !== null) {
+        const langRaw = (m[1] || 'plaintext').trim();
+        const lang = normalizeLanguageId(langRaw);
+        const code = m[2];
+        if (code.trim().length > 0) {
+            const key = `${lang}::${code}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                results.push({ code, languageId: lang });
+            }
+        }
+    }
+
+    // Extract simple bullet lines as plaintext snippets from non-code sections
+    // Keep it lightweight to avoid over-parsing. Ignore lines inside code fences.
+    const lines = md.split(/\r?\n/);
+    let insideFence = false;
+    for (const line of lines) {
+        if (line.startsWith('```')) {
+            insideFence = !insideFence;
+            continue;
+        }
+        if (insideFence) continue;
+        const trimmed = line.trim();
+        if (trimmed.startsWith('- ')) {
+            const text = trimmed.slice(2).trim();
+            if (text) {
+                const key = `plaintext::${text}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    results.push({ code: text, languageId: 'plaintext' });
+                }
+            }
+        }
+    }
+
+    return results;
+}
+
+function parseCodePackJson(json: string): { code: string; languageId: string }[] {
+    const results: { code: string; languageId: string }[] = [];
+    const seen = new Set<string>();
+
+    let parsed: any;
+    try {
+        parsed = JSON.parse(json);
+    } catch (error) {
+        logWithTimestamp('Invalid JSON in code-pack.', 'warn', error);
+        return results;
+    }
+
+    const entries: any[] = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.entries)
+            ? parsed.entries
+            : [];
+
+    const pushEntry = (raw: any) => {
+        if (!raw) {
+            return;
+        }
+        const codeValue = typeof raw.code === 'string'
+            ? raw.code
+            : typeof raw.text === 'string'
+                ? raw.text
+                : undefined;
+        if (!codeValue) {
+            return;
+        }
+        const langRaw = typeof raw.languageId === 'string'
+            ? raw.languageId
+            : typeof raw.language === 'string'
+                ? raw.language
+                : typeof raw.lang === 'string'
+                    ? raw.lang
+                    : 'plaintext';
+        const normalized = normalizeLanguageId(langRaw);
+        const key = `${normalized}::${codeValue}`;
+        if (seen.has(key)) {
+            return;
+        }
+        seen.add(key);
+        results.push({ code: codeValue, languageId: normalized });
+    };
+
+    for (const entry of entries) {
+        if (Array.isArray(entry?.variants)) {
+            for (const variant of entry.variants) {
+                pushEntry({ ...entry, ...variant, variants: undefined });
+            }
+        } else {
+            pushEntry(entry);
+        }
+    }
+
+    return results;
 }

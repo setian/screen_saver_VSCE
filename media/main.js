@@ -4,6 +4,7 @@
     const codeBlock = document.getElementById('code-block');
 
     let animationTimeout;
+    let hasPostedReady = false;
     const grammarCache = new Map();
     let lastUserActivityPost = 0;
     const USER_ACTIVITY_DEBOUNCE_MS = 1500;
@@ -200,6 +201,14 @@
         vscode.postMessage({ command: 'userActivity' });
     }
 
+    function signalReady() {
+        if (hasPostedReady) {
+            return;
+        }
+        hasPostedReady = true;
+        vscode.postMessage({ command: 'webviewReady' });
+    }
+
     function clearAnimation() {
         if (animationTimeout) {
             clearTimeout(animationTimeout);
@@ -324,6 +333,16 @@
             const parsedSpeed = Number(message.typingSpeed);
             const speed = Number.isFinite(parsedSpeed) ? parsedSpeed : 40;
             startAnimation(String(message.code ?? ''), lang, speed);
+
+            const sourceLink = document.getElementById('source-link');
+            if (sourceLink) {
+                if (message.sourceUrl) {
+                    sourceLink.href = message.sourceUrl;
+                    sourceLink.classList.remove('hidden');
+                } else {
+                    sourceLink.classList.add('hidden');
+                }
+            }
         }
     });
 
@@ -335,4 +354,26 @@
     window.addEventListener('keydown', exit);
     window.addEventListener('mousedown', exit);
     window.addEventListener('click', exit);
+
+    const sourceLink = document.getElementById('source-link');
+    if (sourceLink) {
+        sourceLink.addEventListener('mousedown', (e) => {
+            // Stop mousedown from bubbling to the window listener, which would exit
+            e.stopPropagation();
+        });
+
+        sourceLink.addEventListener('click', (e) => {
+            // Stop the click from bubbling and also prevent the default link navigation
+            e.stopPropagation();
+            e.preventDefault();
+
+            const url = sourceLink.getAttribute('href');
+            if (url && url !== '#') {
+                vscode.postMessage({ command: 'openExternalUrl', url: url });
+            }
+        });
+    }
+
+    // Allow the extension side to know when it's safe to stream snippets in.
+    setTimeout(signalReady, 0);
 })();

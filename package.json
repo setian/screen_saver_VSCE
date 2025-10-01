@@ -24,6 +24,10 @@
       {
         "command": "screenSaver.test",
         "title": "Screen Saver: Test"
+      },
+      {
+        "command": "screenSaver.configureRepositories",
+        "title": "Screen Saver: Select Repositories"
       }
     ],
     "configuration": {
@@ -32,7 +36,8 @@
         "screenSaver.idleTimeSeconds": {
           "type": "number",
           "default": 300,
-          "description": "The number of seconds of inactivity before the screen saver starts."
+          "description": "The number of seconds of inactivity before the screen saver starts. Minimum value is 5 seconds.",
+          "minimum": 5
         },
         "screenSaver.typingSpeed": {
           "type": "number",
@@ -40,6 +45,71 @@
           "minimum": 1,
           "maximum": 200,
           "description": "Typing speed in milliseconds per character while rendering code."
+        },
+        "screenSaver.repositories.enabled": {
+          "type": "array",
+          "markdownDescription": "Repositories the screen saver may fetch snippets from. Use the command `Screen Saver: Select Repositories` for a checkbox picker.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "theAlgorithmsPython",
+              "theAlgorithmsJavaScript",
+              "theAlgorithmsJava",
+              "theAlgorithmsC",
+              "theAlgorithmsCpp",
+              "theAlgorithmsGo",
+              "theAlgorithmsRust",
+              "theAlgorithmsKotlin",
+              "thirtySecondsOfCode",
+              "oneLoc",
+              "helloWorld",
+              "javascriptQuestions",
+              "wtfjs",
+              "wtfpython",
+              "thirtySecondsOfInterviews",
+              "awesomeProgrammingQuotes",
+              "programmingMemes"
+            ],
+            "enumDescriptions": [
+              "TheAlgorithms · Python",
+              "TheAlgorithms · JavaScript",
+              "TheAlgorithms · Java",
+              "TheAlgorithms · C",
+              "TheAlgorithms · C++",
+              "TheAlgorithms · Go",
+              "TheAlgorithms · Rust",
+              "TheAlgorithms · Kotlin",
+              "30 Seconds of Code",
+              "1loc",
+              "leachim6 · hello-world",
+              "LydiaHallie · JavaScript Questions",
+              "denysdovhan · wtfjs",
+              "satwikkansal · wtfpython",
+              "30 Seconds of Interviews",
+              "awesome-programming-quotes",
+              "programming-memes"
+            ]
+          },
+          "default": [
+            "theAlgorithmsPython",
+            "theAlgorithmsJavaScript",
+            "theAlgorithmsJava",
+            "theAlgorithmsC",
+            "theAlgorithmsCpp",
+            "theAlgorithmsGo",
+            "theAlgorithmsRust",
+            "theAlgorithmsKotlin",
+            "thirtySecondsOfCode",
+            "oneLoc",
+            "helloWorld",
+            "javascriptQuestions",
+            "wtfjs",
+            "wtfpython",
+            "thirtySecondsOfInterviews",
+            "awesomeProgrammingQuotes",
+            "programmingMemes"
+          ],
+          "uniqueItems": true
         }
       }
     }

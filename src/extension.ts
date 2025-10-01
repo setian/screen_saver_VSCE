@@ -16,6 +16,22 @@ let lastKnownLanguageId = 'plaintext';
 const repoCooldowns = new Map<string, number>();
 let resetIdleTimerRef: (() => void) | undefined;
 let codePackSnippets: { code: string; languageId: string }[] = [];
+let currentTypingSpeed = 40;
+
+interface LoadCodePayload {
+    code: string;
+    languageId: string;
+    typingSpeed?: number;
+    sourceUrl?: string;
+}
+
+interface PendingLoad {
+    payload: LoadCodePayload;
+    reason: 'initial' | 'update';
+}
+
+let pendingLoad: PendingLoad | undefined;
+let webviewReady = false;
 
 // --- Repository cache ---
 interface RepoFileEntry {
@@ -114,6 +130,11 @@ interface SnippetRepository {
     license: string;
     licenseUrl?: string;
     languages: string[];
+    configId?: string;
+}
+
+interface RepositoryQuickPickItem extends vscode.QuickPickItem {
+    repository: SnippetRepository;
 }
 
 interface RepoCache {
@@ -129,7 +150,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'Python',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/Python/blob/master/LICENSE',
-        languages: ['python']
+        languages: ['python'],
+        configId: 'theAlgorithmsPython'
     },
     {
         label: 'TheAlgorithms · JavaScript',
@@ -137,7 +159,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'JavaScript',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/JavaScript/blob/master/LICENSE',
-        languages: ['javascript', 'typescript']
+        languages: ['javascript', 'typescript'],
+        configId: 'theAlgorithmsJavaScript'
     },
     {
         label: 'TheAlgorithms · Java',
@@ -145,7 +168,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'Java',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/Java/blob/master/LICENSE',
-        languages: ['java']
+        languages: ['java'],
+        configId: 'theAlgorithmsJava'
     },
     {
         label: 'TheAlgorithms · C',
@@ -153,7 +177,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'C',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/C/blob/main/LICENSE',
-        languages: ['c']
+        languages: ['c'],
+        configId: 'theAlgorithmsC'
     },
     {
         label: 'TheAlgorithms · C++',
@@ -161,7 +186,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'C-Plus-Plus',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/C-Plus-Plus/blob/master/LICENSE',
-        languages: ['cpp']
+        languages: ['cpp'],
+        configId: 'theAlgorithmsCpp'
     },
     {
         label: 'TheAlgorithms · Go',
@@ -169,7 +195,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'Go',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/Go/blob/master/LICENSE',
-        languages: ['go']
+        languages: ['go'],
+        configId: 'theAlgorithmsGo'
     },
     {
         label: 'TheAlgorithms · Rust',
@@ -177,7 +204,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'Rust',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/Rust/blob/master/LICENSE',
-        languages: ['rust']
+        languages: ['rust'],
+        configId: 'theAlgorithmsRust'
     },
     {
         label: 'TheAlgorithms · Kotlin',
@@ -185,7 +213,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'Kotlin',
         license: 'MIT',
         licenseUrl: 'https://github.com/TheAlgorithms/Kotlin/blob/master/LICENSE',
-        languages: ['kotlin']
+        languages: ['kotlin'],
+        configId: 'theAlgorithmsKotlin'
     },
     {
         label: '30 Seconds of Code',
@@ -193,7 +222,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: '30-seconds-of-code',
         license: 'CC0 1.0 Universal',
         licenseUrl: 'https://github.com/30-seconds/30-seconds-of-code/blob/master/LICENSE',
-        languages: ['javascript', 'typescript', 'react']
+        languages: ['javascript', 'typescript', 'react'],
+        configId: 'thirtySecondsOfCode'
     },
     {
         label: '1loc',
@@ -201,7 +231,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: '1loc',
         license: 'MIT',
         licenseUrl: 'https://github.com/phuoc-ng/1loc/blob/master/LICENSE',
-        languages: ['javascript']
+        languages: ['javascript'],
+        configId: 'oneLoc'
     },
     {
         label: 'leachim6 · Hello World',
@@ -209,7 +240,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'hello-world',
         license: 'CC BY 4.0',
         licenseUrl: 'https://github.com/leachim6/hello-world/blob/master/LICENSE',
-        languages: ['plaintext', 'c', 'cpp', 'java', 'javascript', 'python', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'brainfuck']
+        languages: ['plaintext', 'c', 'cpp', 'java', 'javascript', 'python', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'brainfuck'],
+        configId: 'helloWorld'
     },
     {
         label: 'LydiaHallie · JavaScript Questions',
@@ -217,7 +249,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'javascript-questions',
         license: 'MIT',
         licenseUrl: 'https://github.com/lydiahallie/javascript-questions/blob/main/LICENSE',
-        languages: ['javascript', 'typescript', 'plaintext']
+        languages: ['javascript', 'typescript', 'plaintext'],
+        configId: 'javascriptQuestions'
     },
     {
         label: 'denysdovhan · wtfjs',
@@ -225,7 +258,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'wtfjs',
         license: 'MIT',
         licenseUrl: 'https://github.com/denysdovhan/wtfjs/blob/master/LICENSE',
-        languages: ['javascript', 'typescript', 'plaintext']
+        languages: ['javascript', 'typescript', 'plaintext'],
+        configId: 'wtfjs'
     },
     {
         label: 'satwikkansal · wtfpython',
@@ -233,7 +267,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'wtfpython',
         license: 'MIT',
         licenseUrl: 'https://github.com/satwikkansal/wtfpython/blob/master/LICENSE',
-        languages: ['python', 'plaintext']
+        languages: ['python', 'plaintext'],
+        configId: 'wtfpython'
     },
     {
         label: '30 Seconds of Interviews',
@@ -241,7 +276,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: '30-seconds-of-interviews',
         license: 'MIT',
         licenseUrl: 'https://github.com/30-seconds/30-seconds-of-interviews/blob/master/LICENSE',
-        languages: ['javascript', 'typescript', 'plaintext']
+        languages: ['javascript', 'typescript', 'plaintext'],
+        configId: 'thirtySecondsOfInterviews'
     },
     {
         label: 'awesome-programming-quotes',
@@ -249,7 +285,8 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'awesome-programming-quotes',
         license: 'See repository license',
         licenseUrl: 'https://github.com/ashishb/awesome-programming-quotes',
-        languages: ['plaintext']
+        languages: ['plaintext'],
+        configId: 'awesomeProgrammingQuotes'
     },
     {
         label: 'programming-memes',
@@ -257,9 +294,14 @@ const SNIPPET_REPOSITORIES: SnippetRepository[] = [
         repo: 'programming-memes',
         license: 'See repository license',
         licenseUrl: 'https://github.com/abhisheknaiidu/programming-memes',
-        languages: ['plaintext']
+        languages: ['plaintext'],
+        configId: 'programmingMemes'
     }
 ];
+
+const DEFAULT_REPOSITORY_IDS: string[] = SNIPPET_REPOSITORIES
+    .map(repo => repo.configId)
+    .filter((id): id is string => typeof id === 'string');
 
 const LANGUAGE_TO_REPOSITORIES = SNIPPET_REPOSITORIES.reduce<Record<string, SnippetRepository[]>>((acc, repository) => {
     for (const lang of repository.languages) {
@@ -280,6 +322,15 @@ function normalizeLanguageId(languageId: string | undefined): string {
     }
     const lowered = languageId.toLowerCase();
     return LANGUAGE_ALIASES[lowered] ?? lowered;
+}
+
+function getEnabledRepositoryIds(): Set<string> {
+    const config = vscode.workspace.getConfiguration('screenSaver');
+    const configured = config.get<string[]>('repositories.enabled');
+    if (Array.isArray(configured)) {
+        return new Set(configured);
+    }
+    return new Set(DEFAULT_REPOSITORY_IDS);
 }
 
 function getActiveOrLastLanguageId(): string {
@@ -520,7 +571,7 @@ async function tryFetchFromRepository(
     repository: SnippetRepository,
     normalizedLang: string,
     extensions: string[]
-): Promise<{ code: string; languageId: string } | undefined> {
+): Promise<{ code: string; languageId: string; sourceUrl: string } | undefined> {
     const cache = await ensureRepoCache(repository);
     if (!cache || cache.entries.length === 0) {
         logWithTimestamp(`Repository cache empty for ${repository.label}.`, 'warn');
@@ -577,12 +628,14 @@ async function tryFetchFromRepository(
                 : `// Could not find a '${normalizedLang}' file. Displaying '${inferredLanguage}'.\n\n`;
 
             const licenseHeader = buildLicenseHeader(repository, branch, entry.path);
+            const sourceUrl = `https://github.com/${repository.owner}/${repository.repo}/blob/${branch}/${entry.path}`;
 
             logWithTimestamp(`Loaded snippet from ${entry.path} (${repoLabel}).`);
             lastRepositoryKey = getRepoCacheKey(repository);
             return {
                 code: licenseHeader + prefixMessage + finalCode,
-                languageId: inferredLanguage
+                languageId: inferredLanguage,
+                sourceUrl
             };
         } catch (error: any) {
             logWithTimestamp(`Failed to process ${entry.path} from ${repoLabel}.`, 'warn', error);
@@ -593,13 +646,23 @@ async function tryFetchFromRepository(
     return undefined;
 }
 
-async function fetchRandomRepoSnippet(languageId: string): Promise<{ code: string; languageId: string }> {
+async function fetchRandomRepoSnippet(languageId: string): Promise<{ code: string; languageId: string; sourceUrl?: string }> {
     const normalizedLang = normalizeLanguageId(languageId);
     const extensions = getExtensionsForLanguage(normalizedLang);
 
-    const preferredRepos = LANGUAGE_TO_REPOSITORIES[normalizedLang] ?? [];
+    const enabledRepositoryIds = getEnabledRepositoryIds();
+    const isEnabled = (repository: SnippetRepository) => {
+        if (!repository.configId) {
+            return true;
+        }
+        return enabledRepositoryIds.has(repository.configId);
+    };
+
+    const preferredRepos = (LANGUAGE_TO_REPOSITORIES[normalizedLang] ?? []).filter(isEnabled);
     const preferredKeys = new Set(preferredRepos.map(repo => getRepoCacheKey(repo)));
-    const fallbackRepos = SNIPPET_REPOSITORIES.filter(repo => !preferredKeys.has(getRepoCacheKey(repo)));
+    const fallbackRepos = SNIPPET_REPOSITORIES.filter(
+        repo => isEnabled(repo) && !preferredKeys.has(getRepoCacheKey(repo))
+    );
 
     const filteredPreferred = preferredRepos.filter(repo => getRepoCacheKey(repo) !== lastRepositoryKey);
     const filteredFallback = fallbackRepos.filter(repo => getRepoCacheKey(repo) !== lastRepositoryKey);
@@ -611,7 +674,7 @@ async function fetchRandomRepoSnippet(languageId: string): Promise<{ code: strin
 
     if (lastRepositoryKey) {
         const lastRepo = SNIPPET_REPOSITORIES.find(repo => getRepoCacheKey(repo) === lastRepositoryKey);
-        if (lastRepo) {
+        if (lastRepo && isEnabled(lastRepo)) {
             repositoriesToTry.push(lastRepo);
         }
     }
@@ -629,7 +692,62 @@ async function fetchRandomRepoSnippet(languageId: string): Promise<{ code: strin
     return getRandomFallbackSnippet(normalizedLang);
 }
 
+function queueLoadCodeDelivery(payload: LoadCodePayload, reason: 'initial' | 'update', attempt = 0): void {
+    if (!webviewPanel) {
+        pendingLoad = undefined;
+        return;
+    }
+
+    const entry: PendingLoad = { payload, reason };
+    pendingLoad = entry;
+
+    if (!webviewReady) {
+        return;
+    }
+
+    const panel = webviewPanel;
+    if (!panel) {
+        pendingLoad = undefined;
+        return;
+    }
+    (async () => {
+        const accepted = await panel.webview.postMessage({ command: 'loadCode', ...payload });
+        if (!accepted) {
+            if (attempt >= 3) {
+                logWithTimestamp(
+                    `Webview rejected ${reason} snippet delivery after ${attempt + 1} attempts.`,
+                    'warn'
+                );
+                return;
+            }
+            const delay = Math.min(500, 100 * (attempt + 1));
+            setTimeout(() => queueLoadCodeDelivery(payload, reason, attempt + 1), delay);
+            return;
+        }
+
+        if (pendingLoad === entry) {
+            pendingLoad = undefined;
+        }
+        logWithTimestamp(reason === 'initial' ? 'Initial snippet sent to webview.' : 'Next snippet sent to webview.');
+    })().catch(error => {
+        logWithTimestamp(`Failed to deliver ${reason} snippet to webview.`, 'warn', error);
+        if (attempt < 3) {
+            const delay = Math.min(500, 100 * (attempt + 1));
+            setTimeout(() => queueLoadCodeDelivery(payload, reason, attempt + 1), delay);
+        }
+    });
+}
+
 async function showScreenSaver(context: vscode.ExtensionContext) {
+    if (!vscode.window.state.focused) {
+        logWithTimestamp('Skipping screen saver launch because VS Code window is not focused.');
+        if (idleTimer) {
+            clearTimeout(idleTimer);
+            idleTimer = undefined;
+        }
+        return;
+    }
+
     if (webviewPanel) {
         logWithTimestamp('Screen saver already open. Revealing existing panel.');
         webviewPanel.reveal(vscode.ViewColumn.One);
@@ -647,11 +765,15 @@ async function showScreenSaver(context: vscode.ExtensionContext) {
         }
     );
 
+    webviewReady = false;
+    pendingLoad = undefined;
     webviewPanel.webview.html = getWebviewContent(context, webviewPanel.webview);
 
     webviewPanel.onDidDispose(() => {
         logWithTimestamp('Screen saver webview disposed.');
         webviewPanel = undefined;
+        pendingLoad = undefined;
+        webviewReady = false;
     }, null, context.subscriptions);
 
     webviewPanel.webview.onDidReceiveMessage(async message => {
@@ -659,31 +781,47 @@ async function showScreenSaver(context: vscode.ExtensionContext) {
         switch (message.command) {
             case 'exitScreenSaver':
                 logWithTimestamp('Received exit command from webview.');
+                pendingLoad = undefined;
+                webviewReady = false;
                 if (webviewPanel) webviewPanel.dispose();
                 break;
             case 'requestNewGist':
                 logWithTimestamp(`Webview requested new snippet for '${langId}'.`);
                 const newContent = await fetchRandomRepoSnippet(langId);
                 if (webviewPanel) {
-                    webviewPanel.webview.postMessage({ command: 'loadCode', ...newContent });
+                    currentTypingSpeed = vscode.workspace.getConfiguration('screenSaver').get<number>('typingSpeed', 40);
+                    queueLoadCodeDelivery({ typingSpeed: currentTypingSpeed, ...newContent }, 'update');
                 }
                 break;
             case 'userActivity':
                 resetIdleTimerRef?.();
                 break;
+            case 'webviewReady': {
+                webviewReady = true;
+                const pending = pendingLoad;
+                if (pending) {
+                    queueLoadCodeDelivery(pending.payload, pending.reason);
+                }
+                break;
+            }
+            case 'openExternalUrl': {
+                const url = message.url;
+                if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    vscode.env.openExternal(vscode.Uri.parse(url));
+                }
+                break;
+            }
         }
     }, undefined, context.subscriptions);
 
     const initialLangId = getActiveOrLastLanguageId();
-    const configuration = vscode.workspace.getConfiguration('screenSaver');
-    const typingSpeed = configuration.get<number>('typingSpeed', 40);
+    currentTypingSpeed = vscode.workspace.getConfiguration('screenSaver').get<number>('typingSpeed', 40);
 
     logWithTimestamp(`Loading initial snippet for '${initialLangId}'.`);
     const initialContent = await fetchRandomRepoSnippet(initialLangId);
 
     if (webviewPanel) {
-        webviewPanel.webview.postMessage({ command: 'loadCode', typingSpeed, ...initialContent });
-        logWithTimestamp('Initial snippet sent to webview.');
+        queueLoadCodeDelivery({ typingSpeed: currentTypingSpeed, ...initialContent }, 'initial');
     }
 }
 
@@ -719,6 +857,7 @@ export function activate(context: vscode.ExtensionContext) {
     const resetIdleTimer = () => {
         if (idleTimer) {
             clearTimeout(idleTimer);
+            idleTimer = undefined;
         }
         getActiveOrLastLanguageId();
         if (!vscode.window.state.focused) {
@@ -727,13 +866,19 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const configuration = vscode.workspace.getConfiguration('screenSaver');
-        const idleTime = configuration.get<number>('idleTimeSeconds', 300);
+        let idleTime = configuration.get<number>('idleTimeSeconds', 300);
+        if (idleTime > 0 && idleTime < 5) {
+            logWithTimestamp(`Configured idle time of ${idleTime}s is too short. Using minimum of 5s.`, 'warn');
+            idleTime = 5;
+        }
+
         if (idleTime > 0) {
             const triggerAt = new Date(Date.now() + idleTime * 1000);
             logWithTimestamp(
                 `Idle timer armed for ${idleTime} seconds. Scheduled at ${triggerAt.toLocaleTimeString()}.`
             );
             idleTimer = setTimeout(() => {
+                idleTimer = undefined;
                 logWithTimestamp('Idle timer elapsed. Launching screen saver.');
                 showScreenSaver(context);
             }, idleTime * 1000);
@@ -757,11 +902,6 @@ export function activate(context: vscode.ExtensionContext) {
     if (vscode.window.onDidChangeVisibleNotebookEditors) {
         context.subscriptions.push(vscode.window.onDidChangeVisibleNotebookEditors(() => resetIdleTimer()));
     }
-    const onDidWriteTerminalData = (vscode.window as any).onDidWriteTerminalData as vscode.Event<unknown> | undefined;
-    if (onDidWriteTerminalData) {
-        context.subscriptions.push(onDidWriteTerminalData(() => resetIdleTimer()));
-    }
-
     context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(() => resetIdleTimer()));
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(() => resetIdleTimer()));
     context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(() => resetIdleTimer()));
@@ -778,15 +918,22 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.window.onDidChangeWindowState(windowState => {
         if (windowState.focused) {
-            resetIdleTimer();
+            setTimeout(() => resetIdleTimer(), 0);
         } else {
-            if (idleTimer) clearTimeout(idleTimer);
+            if (idleTimer) {
+                clearTimeout(idleTimer);
+                idleTimer = undefined;
+                logWithTimestamp('Window lost focus. Idle timer reset.');
+            }
             if (webviewPanel) webviewPanel.dispose();
         }
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('screenSaver.test', () => {
         showScreenSaver(context);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('screenSaver.configureRepositories', async () => {
+        await showRepositoryPicker();
     }));
 
     resetIdleTimer();
@@ -799,7 +946,7 @@ export function deactivate() {
 }
 
 // --- Fallback helpers ---
-function getRandomFallbackSnippet(preferredLanguageId?: string): { code: string; languageId: string } {
+function getRandomFallbackSnippet(preferredLanguageId?: string): { code: string; languageId: string; sourceUrl?: string } {
     const basePool = codePackSnippets.length > 0
         ? codePackSnippets
         : Array.from(BUILT_IN_FALLBACK_SNIPPETS);
@@ -810,6 +957,33 @@ function getRandomFallbackSnippet(preferredLanguageId?: string): { code: string;
         return BUILT_IN_FALLBACK_SNIPPETS[0];
     }
     return pool[Math.floor(Math.random() * pool.length)];
+}
+
+async function showRepositoryPicker(): Promise<void> {
+    const enabledIds = getEnabledRepositoryIds();
+    const items: RepositoryQuickPickItem[] = SNIPPET_REPOSITORIES.map(repository => ({
+        label: repository.label,
+        description: repository.languages.join(', '),
+        picked: !repository.configId || enabledIds.has(repository.configId),
+        repository
+    }));
+
+    const selection = await vscode.window.showQuickPick(items, {
+        canPickMany: true,
+        title: 'Select repositories for Coding Screen Saver'
+    });
+
+    if (!selection) {
+        return;
+    }
+
+    const selectedIds = selection
+        .map(item => item.repository.configId)
+        .filter((id): id is string => typeof id === 'string');
+
+    const configuration = vscode.workspace.getConfiguration('screenSaver');
+    await configuration.update('repositories.enabled', selectedIds, vscode.ConfigurationTarget.Workspace);
+    logWithTimestamp(`Repository selection updated. ${selectedIds.length} enabled.`);
 }
 
 function loadCodePackSnippets(context: vscode.ExtensionContext): void {
@@ -911,7 +1085,7 @@ function parseCodePackJson(json: string): { code: string; languageId: string }[]
                 : undefined;
         if (!codeValue) {
             return;
-        }
+        };
         const langRaw = typeof raw.languageId === 'string'
             ? raw.languageId
             : typeof raw.language === 'string'

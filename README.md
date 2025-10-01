@@ -18,14 +18,16 @@ The screensaver will activate automatically when there has been no activity (typ
 - **Offline Code Pack**: A curated `docs/code-pack.json` keeps multilingual tricks, memes, and interview questions ready when GitHub is unavailable.
 - **All-Activity Idle Detection**: Watches keyboard, mouse, terminal, notebook, and even screensaver webview activity so it only launches when you are truly idle.
 - **Infinite Loop**: Each snippet hands off to the next one automatically.
+- **Per-Repo Selection**: Pick exactly which GitHub sources to draw from with the `Screen Saver: Select Repositories` command.
 - **Configurable**: Adjust the idle timeout and typing speed from the VS Code settings UI or `settings.json`.
 
 ## Configuration
 
 You can customize the extension's behavior by modifying the following settings in your `settings.json`:
 
-- `screenSaver.idleTimeSeconds`: The number of seconds of inactivity before the screen saver starts. (Default: `300`)
+- `screenSaver.idleTimeSeconds`: The number of seconds of inactivity before the screen saver starts. (Default: `300`, minimum: `5`)
 - `screenSaver.typingSpeed`: Typing speed in milliseconds per character while rendering the code. (Default: `40`)
+- `screenSaver.repositories.enabled`: Array of repository identifiers to use. Run `Screen Saver: Select Repositories` for a checkbox picker.
 
 ## Development Journey
 
@@ -34,3 +36,7 @@ The entire development process for this extension, from initial idea to final po
 ## Share Your Snippets
 
 If you have fun snippet ideas, clever memes, or mini algorithms to share, open an issue or PR any time—we'd love to keep the screensaver fresh and surprising.
+
+
+## License
+MIT

@@ -97,3 +97,34 @@ pre#container.hljs,
     font-style: italic;
     color: #808080;
 }
+
+#source-link-container {
+    position: fixed;
+    bottom: 15px;
+    right: 20px;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+#source-link-container:hover {
+    opacity: 1;
+}
+
+#source-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #D4D4D4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 12px;
+}
+
+#source-link.hidden {
+    display: none;
+}
+
+#source-link .github-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+}

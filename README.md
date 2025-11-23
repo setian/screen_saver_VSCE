@@ -2,8 +2,7 @@
 
 > **"Even if you sleep or leave your seat, this screensaver keeps coding. Your boss will think you're working all night."**
 
-![Screen Saver Demo](media/demo.png)
-*(Note: Please add a `demo.gif` to the `media` folder to see the preview here!)*
+![Screen Saver Demo](https://github.com/setian/screen_saver_VSCE/raw/main/media/demo.png)
 
 ## 🚀 Introduction
 

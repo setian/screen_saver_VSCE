@@ -2,7 +2,7 @@
   "name": "coding-screensaver",
   "displayName": "Coding Screen Saver",
   "description": "An immersive, animated screensaver for VS Code that simulates live coding by fetching real code snippets from GitHub.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "publisher": "Nahceskrap",
   "icon": "media/icons/icon.png",
   "repository": {
